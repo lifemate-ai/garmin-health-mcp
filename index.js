@@ -60,12 +60,25 @@ server.tool(
     const gc = await getClient();
     const d = date ? new Date(date) : new Date();
     const hr = await gc.getHeartRate(d);
+    // Extract latest heart rate from time-series data
+    const heartRateValues = hr?.heartRateValues || [];
+    let latestHR = null;
+    let latestTimestamp = null;
+    for (const entry of heartRateValues) {
+      if (entry && entry[1] > 0) {
+        latestTimestamp = entry[0];
+        latestHR = entry[1];
+      }
+    }
     const summary = {
       date: formatDate(d),
       restingHeartRate: hr?.restingHeartRate,
       maxHeartRate: hr?.maxHeartRate,
       minHeartRate: hr?.minHeartRate,
       lastSevenDaysAvgRestingHeartRate: hr?.lastSevenDaysAvgRestingHeartRate,
+      latestHeartRate: latestHR,
+      latestTimestamp: latestTimestamp ? new Date(latestTimestamp).toISOString() : null,
+      timeSeriesCount: heartRateValues.length,
     };
     return { content: [{ type: "text", text: JSON.stringify(summary, null, 2) }] };
   }
